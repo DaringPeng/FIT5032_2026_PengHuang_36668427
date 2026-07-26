@@ -1,6 +1,6 @@
 # health-charity
 
-This repository is created for Lab 1 and A2.
+This repository is created for Lab 1, A2 and A3.
 
 ## Recommended IDE Setup
 
