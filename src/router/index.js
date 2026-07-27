@@ -1,59 +1,44 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { auth, db } from '../firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { createRouter, createWebHistory } from 'vue-router';
+import { auth, db } from '../firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
+import Home from '../views/Home.vue';
 
 const routes = [
-  { path: '/', name: 'Home', component: () => import('../views/HomeView.vue') },
-  { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue') },
-  { path: '/register', name: 'Register', component: () => import('../views/RegisterView.vue') },
+  { path: '/', component: Home, meta: { requiresAuth: true } },
+  { path: '/senior', component: () => import('../views/SeniorHub.vue'), meta: { requiresAuth: true } },
+  { path: '/caregiver', component: () => import('../views/CaregiverHub.vue'), meta: { requiresAuth: true } },
+  { path: '/community', component: () => import('../views/Community.vue'), meta: { requiresAuth: true } },
+  { path: '/about', component: () => import('../views/About.vue'), meta: { requiresAuth: true } },
+  { path: '/auth', component: () => import('../views/Auth.vue') }, 
   { 
-    path: '/health-resources', 
-    name: 'HealthResources', 
-    component: () => import('../views/HealthResourcesView.vue'),
-    meta: { requiresAuth: true } // BR C.1: Accessible only to logged-in users
-  },
-  { 
-    path: '/caregivers', 
-    name: 'CaregiverHub', 
-    component: () => import('../views/CaregiverResourcesView.vue'),
-    meta: { requiresAuth: true, role: 'caregiver' } // BR C.2: Accessible only to caregiver
-  },
-  {
-    path: '/community',
-    name: 'Community',
-    component: () => import('../views/CommunityView.vue')
-  },
-  {
-    path: '/contact',
-    name: 'Contact',
-    component: () => import('../views/ContactEmailView.vue')
+    path: '/admin', 
+    component: () => import('../views/Admin.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true } 
   }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
-// Navigation Guard：Secure Navigation and Role-based authentication
 router.beforeEach(async (to, from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiredRole = to.matched.find(record => record.meta.role)?.meta.role
-  const user = auth.currentUser
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+  const currentUser = auth.currentUser;
 
-  if (requiresAuth && !user) {
-    next('/login')
-  } else if (requiresAuth && user && requiredRole) {
-    const userDoc = await getDoc(doc(db, "users", user.uid))
-    if (userDoc.exists() && userDoc.data().role === requiredRole) {
-      next()
+  if (requiresAuth && !currentUser) {
+    next('/auth');
+  } else if (requiresAuth && requiresAdmin && currentUser) {
+    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    if (userDoc.exists() && userDoc.data().role === 'admin') {
+      next();
     } else {
-      alert('Access Denied: You do not have the required role.')
-      next('/')
+      next('/');
     }
   } else {
-    next()
+    next();
   }
-})
+});
 
-export default router
+export default router;
