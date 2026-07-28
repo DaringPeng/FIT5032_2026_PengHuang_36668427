@@ -7,13 +7,13 @@
       <form @submit.prevent="handleSubmit" class="p-4 border rounded bg-light" novalidate>
         <div class="mb-3">
           <label class="form-label fs-5 fw-bold">Email Address</label>
-          <input type="email" class="form-control form-control-lg" v-model="form.email" :class="{ 'is-invalid': errors.email }">
+          <input type="email" class="form-control form-control-lg" v-model="form.email" :class="{ 'is-invalid': errors.email }" @input="errors.email = ''">
           <div class="invalid-feedback fs-6">{{ errors.email }}</div>
         </div>
 
         <div class="mb-3">
           <label class="form-label fs-5 fw-bold">Password</label>
-          <input type="password" class="form-control form-control-lg" v-model="form.password" :class="{ 'is-invalid': errors.password }">
+          <input type="password" class="form-control form-control-lg" v-model="form.password" :class="{ 'is-invalid': errors.password }" @input="errors.password = ''">
           <div class="invalid-feedback fs-6">{{ errors.password }}</div>
         </div>
 

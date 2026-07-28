@@ -14,6 +14,7 @@
         <div class="card h-100 shadow-sm border-0">
           <div class="card-body d-flex flex-column">
             <div class="flex-grow-1 d-flex flex-column align-items-start">
+              <!-- XSS protection handled automatically by Vue text interpolation {{}} -->
               <h3 class="card-title fw-bold fs-4">{{ item.title }}</h3>
               <p class="card-text fs-5">{{ item.description }}</p>
               <span class="badge bg-success text-white mb-3 fs-6 mt-auto">{{ item.category }}</span>

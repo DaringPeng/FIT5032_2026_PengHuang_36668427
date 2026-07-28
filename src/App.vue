@@ -64,10 +64,10 @@
             <!-- Contact Form with Validation -->
             <form @submit.prevent="submitContact" novalidate>
               <div class="mb-3">
-                <input type="email" class="form-control" placeholder="Your Email" v-model="contactForm.email" required>
+                <input type="email" class="form-control" placeholder="Your Email" v-model="contactForm.email" @input="contactError = ''" required>
               </div>
               <div class="mb-3">
-                <textarea class="form-control" rows="3" placeholder="How can we help you?" v-model="contactForm.message" required></textarea>
+                <textarea class="form-control" rows="3" placeholder="How can we help you?" v-model="contactForm.message" @input="contactError = ''" required></textarea>
               </div>
               <div v-if="contactError" class="text-danger small mb-2">{{ contactError }}</div>
               <button type="submit" class="btn btn-success w-100">Send Message</button>

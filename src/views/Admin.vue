@@ -12,6 +12,7 @@
             class="form-control form-control-lg" 
             v-model="newResource.title" 
             :class="{ 'is-invalid': errors.title }"
+            @input="errors.title = ''"
           >
           <div class="invalid-feedback">{{ errors.title }}</div>
         </div>
@@ -22,6 +23,7 @@
             class="form-select form-select-lg" 
             v-model="newResource.category" 
             :class="{ 'is-invalid': errors.category }"
+            @change="errors.category = ''"
           >
             <option value="" disabled>Select category...</option>
             <optgroup label="For Seniors">
@@ -43,6 +45,7 @@
             rows="3" 
             v-model="newResource.description" 
             :class="{ 'is-invalid': errors.description }"
+            @input="errors.description = ''"
           ></textarea>
           <div class="invalid-feedback">{{ errors.description }}</div>
         </div>
@@ -87,12 +90,12 @@ const handleAddResource = () => {
     }
     const stored = JSON.parse(localStorage.getItem(storageKey) || '[]');
     const resourceToSave = {
-      id: Date.now(), // 动态生成唯一ID
+      id: Date.now(),
       title: newResource.title,
       category: newResource.category,
       description: newResource.description,
-      ratings: [], // 初始无人打分
-      selectedRating: 5 // 下拉框默认选择5星
+      ratings: [],
+      selectedRating: 5
     };
     
     stored.push(resourceToSave);

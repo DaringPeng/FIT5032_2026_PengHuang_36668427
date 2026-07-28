@@ -9,7 +9,8 @@ const routes = [
   { path: '/caregiver', component: () => import('../views/CaregiverHub.vue'), meta: { requiresAuth: true } },
   { path: '/community', component: () => import('../views/Community.vue'), meta: { requiresAuth: true } },
   { path: '/about', component: () => import('../views/About.vue'), meta: { requiresAuth: true } },
-  { path: '/auth', component: () => import('../views/Auth.vue') }, 
+  { path: '/auth', component: () => import('../views/Auth.vue') },
+  { path: '/unauthorized', component: () => import('../views/AccessDenied.vue') },
   { 
     path: '/admin', 
     component: () => import('../views/Admin.vue'),
@@ -34,7 +35,7 @@ router.beforeEach(async (to, from, next) => {
     if (userDoc.exists() && userDoc.data().role === 'admin') {
       next();
     } else {
-      next('/');
+      next('/unauthorized');
     }
   } else {
     next();
