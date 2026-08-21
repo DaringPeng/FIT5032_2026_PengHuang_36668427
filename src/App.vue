@@ -60,17 +60,63 @@
             </div>
 
             <hr>
-            <h6 class="fw-bold mb-3 mt-3">Send us a direct message</h6>
+            <h6 class="fw-bold mb-3 mt-3">Send us a email</h6>
             <!-- Contact Form with Validation -->
-            <form @submit.prevent="submitContact" novalidate>
+            <form id="contactEmailForm" @submit.prevent="submitContact" enctype="multipart/form-data" novalidate>
               <div class="mb-3">
-                <input type="email" class="form-control" placeholder="Your Email" v-model="contactForm.email" @input="contactError = ''" required>
+                <input 
+                  type="email" 
+                  name="user_email" 
+                  class="form-control" 
+                  placeholder="Your Email" 
+                  v-model="contactForm.email" 
+                  @input="contactError = ''"
+                  required
+                >
               </div>
               <div class="mb-3">
-                <textarea class="form-control" rows="3" placeholder="How can we help you?" v-model="contactForm.message" @input="contactError = ''" required></textarea>
+                <textarea 
+                  name="message" 
+                  class="form-control" 
+                  rows="3" 
+                  placeholder="How can we help you?" 
+                  v-model="contactForm.message" 
+                  @input="contactError = ''"
+                  required
+                ></textarea>
               </div>
-              <div v-if="contactError" class="text-danger small mb-2">{{ contactError }}</div>
-              <button type="submit" class="btn btn-success w-100">Send Message</button>
+              
+              <div class="mb-3">
+                <label class="form-label text-muted small mb-1">Attach Document (Optional)</label>
+                <div class="input-group">
+                  <label class="btn btn-outline-secondary mb-0" for="hiddenFileInput">
+                    Choose File
+                  </label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    :value="fileName" 
+                    placeholder="No file chosen" 
+                    readonly 
+                    style="background-color: #fff; cursor: pointer;"
+                    @click="triggerFileInput"
+                  >
+                  <input 
+                    type="file" 
+                    id="hiddenFileInput" 
+                    name="attachment" 
+                    class="d-none" 
+                    accept=".txt,.docx,.pdf,.png,.jpg,.jpeg"
+                    @change="handleFileChange"
+                  >
+                </div>
+              </div>
+              
+              <div v-if="contactError" class="text-danger small mb-2 fw-bold">{{ contactError }}</div>
+              
+              <button type="submit" class="btn btn-success w-100" :disabled="isSending">
+                {{ isSending ? 'Sending securely...' : 'Send Email' }}
+              </button>
             </form>
           </div>
         </div>
@@ -84,7 +130,8 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { auth, db } from './firebase/config';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import emailjs from '@emailjs/browser';
 
 const router = useRouter();
 const isLoggedIn = ref(false);
@@ -92,6 +139,24 @@ const isAdmin = ref(false);
 
 const contactForm = reactive({ email: '', message: '' });
 const contactError = ref('');
+const isSending = ref(false);
+const fileName = ref('');
+const selectedFile = ref(null);
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    fileName.value = file.name;
+    selectedFile.value = file;
+  } else {
+    fileName.value = '';
+    selectedFile.value = null;
+  }
+};
+
+const triggerFileInput = () => {
+  document.getElementById('hiddenFileInput').click();
+};
 
 // Listen to Firebase authentication state
 onMounted(() => {
@@ -119,25 +184,56 @@ const submitContact = async () => {
     return;
   }
   contactError.value = '';
+  isSending.value = true;
   
   try {
-    await addDoc(collection(db, 'contact_messages'), {
-      email: contactForm.email,
+    let attachmentLink = 'No attachment included.';
+
+    if (selectedFile.value) {
+      const formData = new FormData();
+      formData.append('file', selectedFile.value);
+      
+      const uploadResponse = await fetch('https://tmpfiles.org/api/v1/upload', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const uploadData = await uploadResponse.json();
+      
+      if (uploadData.status === 'success') {
+        const directDownloadUrl = uploadData.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+        attachmentLink = `${directDownloadUrl} (Secure temporary download link)`;
+      } else {
+        throw new Error('File hosting API failed');
+      }
+    }
+
+    const emailParams = {
+      user_email: contactForm.email,
       message: contactForm.message,
-      timestamp: new Date()
-    });
+      attachment_url: attachmentLink
+    };
+
+    await emailjs.send(
+      'service_xfn5mwg',
+      'template_ajyrp49',
+      emailParams,
+      'Vg0By7MUMLe_8miyl'
+    );
     
-    alert('Your message has been securely sent to our support team!');
+    alert('Your email has been successfully sent to our support team!');
     contactForm.email = '';
     contactForm.message = '';
-    
-    // Automatically close modal
-    const closeBtn = document.querySelector('#supportModal .btn-close');
-    if(closeBtn) closeBtn.click();
-    
+    fileName.value = '';
+    selectedFile.value = null;
+
+    document.getElementById('contactEmailForm').reset();
+    document.querySelector('#supportModal .btn-close').click();  // Automatically close modal
   } catch (error) {
-    console.error("Error adding document: ", error);
-    contactError.value = 'Failed to send message. Please try again.';
+    console.error("Error sending email: ", error);
+    contactError.value = 'Network error or file upload failed. Please try again.';
+  } finally {
+    isSending.value = false;
   }
 };
 </script>
