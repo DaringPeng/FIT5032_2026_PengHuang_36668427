@@ -1,9 +1,17 @@
 <template>
   <div id="app">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm" role="navigation" aria-label="Main Navigation">
       <div class="container">
-        <router-link class="navbar-brand fs-3 fw-bold" to="/">HealthCare Charity</router-link>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <router-link class="navbar-brand fs-3 fw-bold" to="/" aria-label="Go to Homepage">HealthCare Charity</router-link>
+        <button 
+          class="navbar-toggler" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation menu"
+          >
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -20,7 +28,7 @@
               <router-link class="nav-link" to="/auth">Login</router-link>
             </li>
             <li class="nav-item" v-if="isLoggedIn">
-              <button @click="handleLogout" class="nav-link btn btn-link text-decoration-none">Logout</button>
+              <button @click="handleLogout" class="nav-link btn btn-link text-decoration-none" aria-label="Log out of your account">Logout</button>
             </li>
           </ul>
         </div>
@@ -28,7 +36,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="container py-5 my-4 bg-white rounded shadow-sm min-vh-100">
+    <main class="container py-5 my-4 bg-white rounded shadow-sm min-vh-100" id="main-content" role="main">
       <router-view />
     </main>
 
@@ -38,24 +46,25 @@
       class="btn btn-danger support-btn shadow-lg rounded-pill px-4 py-3 fw-bold"
       data-bs-toggle="modal" 
       data-bs-target="#supportModal"
+      aria-label="Open emergency support and contact form"
     >
       Get Support Now
     </button>
 
-    <div v-if="!isAdmin" class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div v-if="!isAdmin" class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true" role="dialog" aria-modal="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header bg-danger text-white">
             <h5 class="modal-title fw-bold" id="supportModalLabel">Immediate Help & Helplines</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close support modal"></button>
           </div>
           <div class="modal-body p-4">
             <h6 class="fw-bold mb-3">Emergency Hotlines</h6>
             <div class="d-grid gap-2 mb-4">
-              <a href="tel:911" class="btn btn-outline-danger d-flex justify-content-between align-items-center">
+              <a href="tel:911" class="btn btn-outline-danger d-flex justify-content-between align-items-center" aria-label="Call Medical Emergency at 911">
                 <span>Medical Emergency</span> <strong>Call 911</strong>
               </a>
-              <a href="tel:1800123456" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
+              <a href="tel:1800123456" class="btn btn-outline-primary d-flex justify-content-between align-items-center" aria-label="Call Caregiver Respite Line at 1-800-123-456">
                 <span>Caregiver Respite Line</span> <strong>1-800-123-456</strong>
               </a>
             </div>
@@ -63,7 +72,7 @@
             <hr>
             <h6 class="fw-bold mb-3 mt-3">Send us a email</h6>
             <!-- Contact Form with Validation -->
-            <form id="contactEmailForm" @submit.prevent="submitContact" enctype="multipart/form-data" novalidate>
+            <form id="contactEmailForm" @submit.prevent="submitContact" enctype="multipart/form-data" novalidate aria-label="Contact Support Form">
               <div class="mb-3">
                 <input 
                   type="email" 
@@ -73,6 +82,7 @@
                   v-model="contactForm.email" 
                   @input="contactError = ''"
                   required
+                  aria-label="Your Email Address"
                 >
               </div>
               <div class="mb-3">
@@ -84,13 +94,14 @@
                   v-model="contactForm.message" 
                   @input="contactError = ''"
                   required
+                  aria-label="Message details"
                 ></textarea>
               </div>
               
               <div class="mb-3">
-                <label class="form-label text-muted small mb-1">Attach Document (Optional)</label>
+                <label class="form-label text-muted small mb-1" id="attachmentLabel">Attach Document (Optional)</label>
                 <div class="input-group">
-                  <label class="btn btn-outline-secondary mb-0" for="hiddenFileInput">
+                  <label class="btn btn-outline-secondary mb-0" for="hiddenFileInput" aria-label="Choose file to attach">
                     Choose File
                   </label>
                   <input 
@@ -101,6 +112,7 @@
                     readonly 
                     style="background-color: #fff; cursor: pointer;"
                     @click="triggerFileInput"
+                    aria-describedby="attachmentLabel"
                   >
                   <input 
                     type="file" 
@@ -109,13 +121,14 @@
                     class="d-none" 
                     accept=".txt,.docx,.pdf,.png,.jpg,.jpeg"
                     @change="handleFileChange"
+                    aria-hidden="true"
                   >
                 </div>
               </div>
               
-              <div v-if="contactError" class="text-danger small mb-2 fw-bold">{{ contactError }}</div>
+              <div v-if="contactError" class="text-danger small mb-2 fw-bold" aria-live="polite">{{ contactError }}</div>
               
-              <button type="submit" class="btn btn-success w-100" :disabled="isSending">
+              <button type="submit" class="btn btn-success w-100" :disabled="isSending" aria-label="Send Email">
                 {{ isSending ? 'Sending securely...' : 'Send Email' }}
               </button>
             </form>
@@ -137,7 +150,6 @@ import emailjs from '@emailjs/browser';
 const router = useRouter();
 const isLoggedIn = ref(false);
 const isAdmin = ref(false);
-
 const contactForm = reactive({ email: '', message: '' });
 const contactError = ref('');
 const isSending = ref(false);
@@ -242,5 +254,5 @@ const submitContact = async () => {
 <style>
 body { background-color: #f4f6f9; font-family: 'Arial', sans-serif; color: #212529; }
 .support-btn { position: fixed; bottom: 30px; right: 30px; z-index: 1000; }
-a:focus, button:focus { outline: 3px solid #ffc107 !important; }
+a:focus, button:focus, input:focus, textarea:focus { outline: 3px solid #ffc107 !important; }
 </style>

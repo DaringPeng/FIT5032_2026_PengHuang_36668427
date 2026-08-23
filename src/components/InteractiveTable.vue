@@ -1,14 +1,32 @@
 <template>
   <div class="interactive-table-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="m-0 fw-bold" tabindex="0">Data Table</h5>
+      <button 
+        class="btn btn-outline-success btn-sm fw-bold shadow-sm" 
+        @click="exportToCSV"
+        aria-label="Export table data to CSV format"
+      >
+        📥 Export to CSV
+      </button>
+    </div>
+
     <div class="table-responsive">
-      <table class="table table-hover table-bordered bg-white shadow-sm align-middle">
+      <table class="table table-hover table-bordered bg-white shadow-sm align-middle" role="grid">
         <thead class="table-dark">
           <tr>
-            <th v-for="col in columns" :key="col.key" style="min-width: 150px;">
-              <div class="d-flex justify-content-between align-items-center mb-2 text-nowrap" style="cursor: pointer;" @click="sortBy(col.key)">
+            <th v-for="col in columns" :key="col.key" style="min-width: 150px;" scope="col">
+              <div 
+                class="d-flex justify-content-between align-items-center mb-2 text-nowrap" 
+                style="cursor: pointer;" 
+                tabindex="0"
+                @click="sortBy(col.key)"
+                @keyup.enter="sortBy(col.key)"
+                :aria-label="`Sort by ${col.label}`"
+              >
                 {{ col.label }}
-                <span v-if="sortKey === col.key">{{ sortAsc ? ' ▲' : ' ▼' }}</span>
-                <span v-else class="text-muted"> ⇅</span>
+                <span v-if="sortKey === col.key" aria-hidden="true">{{ sortAsc ? ' ▲' : ' ▼' }}</span>
+                <span v-else class="text-muted" aria-hidden="true"> ⇅</span>
               </div>
               <!-- Search by individual column -->
               <input 
@@ -16,6 +34,7 @@
                 class="form-control form-control-sm" 
                 :placeholder="`Search ${col.label}...`" 
                 v-model="filters[col.key]"
+                :aria-label="`Search in column ${col.label}`"
                 @click.stop
               >
             </th>
@@ -34,13 +53,13 @@
 
     <!-- Limit to 10 rows per page -->
     <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-3">
-      <span class="text-muted fw-bold">
+      <span class="text-muted fw-bold" aria-live="polite">
         Showing {{ startIndex + 1 }} to {{ Math.min(startIndex + 10, filteredAndSortedData.length) }} of {{ filteredAndSortedData.length }} entries
       </span>
       <div class="btn-group shadow-sm">
-        <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="currentPage--">Previous</button>
-        <button class="btn btn-primary" disabled>Page {{ currentPage }} of {{ totalPages || 1 }}</button>
-        <button class="btn btn-outline-primary" :disabled="currentPage >= totalPages" @click="currentPage++">Next</button>
+        <button class="btn btn-outline-primary" :disabled="currentPage === 1" @click="currentPage--" aria-label="Previous Page">Previous</button>
+        <button class="btn btn-primary" disabled aria-label="Current Page">Page {{ currentPage }} of {{ totalPages || 1 }}</button>
+        <button class="btn btn-outline-primary" :disabled="currentPage >= totalPages" @click="currentPage++" aria-label="Next Page">Next</button>
       </div>
     </div>
   </div>
@@ -103,4 +122,24 @@ const startIndex = computed(() => (currentPage.value - 1) * rowsPerPage);
 const paginatedData = computed(() => {
   return filteredAndSortedData.value.slice(startIndex.value, startIndex.value + rowsPerPage);
 });
+
+const exportToCSV = () => {
+  if (filteredAndSortedData.value.length === 0) {
+    alert("No data available to export.");
+    return;
+  }
+  
+  const headers = props.columns.map(col => `"${col.label}"`).join(',');
+  const rows = filteredAndSortedData.value.map(row => {
+    return props.columns.map(col => `"${row[col.key]}"`).join(',');
+  });
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers, ...rows].join('\n');
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', `table_export_${new Date().getTime()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 </script>
