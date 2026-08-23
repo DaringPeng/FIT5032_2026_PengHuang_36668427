@@ -14,10 +14,13 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@mapbox/mapbox-gl-directions": "^4.3.3",
+    "@mapbox/mapbox-gl-geocoder": "^5.1.2",
     "@primevue/themes": "^4.5.4",
     "bootstrap": "^5.3.8",
     "firebase": "^12.16.0",
     "jspdf": "^4.2.1",
+    "mapbox-gl": "^3.29.0",
     "primeicons": "^8.0.0",
     "primevue": "^5.0.0",
     "vue": "^3.5.40",
