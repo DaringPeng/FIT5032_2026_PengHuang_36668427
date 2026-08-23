@@ -23,22 +23,22 @@ const router = createRouter({
   routes
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
   const currentUser = auth.currentUser;
 
   if (requiresAuth && !currentUser) {
-    next('/auth');
+    return '/auth';
   } else if (requiresAuth && requiresAdmin && currentUser) {
     const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
     if (userDoc.exists() && userDoc.data().role === 'admin') {
-      next();
+      return true;
     } else {
-      next('/unauthorized');
+      return '/unauthorized';
     }
   } else {
-    next();
+    return true;
   }
 });
 

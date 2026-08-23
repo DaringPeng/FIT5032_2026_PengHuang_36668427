@@ -33,7 +33,8 @@
     </main>
 
     <!-- Caregiver floating support button -->
-    <button 
+    <button
+      v-if="!isAdmin" 
       class="btn btn-danger support-btn shadow-lg rounded-pill px-4 py-3 fw-bold"
       data-bs-toggle="modal" 
       data-bs-target="#supportModal"
@@ -41,7 +42,7 @@
       Get Support Now
     </button>
 
-    <div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div v-if="!isAdmin" class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header bg-danger text-white">
