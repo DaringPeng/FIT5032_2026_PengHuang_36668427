@@ -20,8 +20,9 @@
         <div class="mb-4" v-if="!isLogin">
           <label class="form-label fs-5 fw-bold">Select Role</label>
           <select class="form-select form-select-lg" v-model="form.role">
-            <option value="user">Senior / Caregiver (Normal User)</option>
-            <option value="admin">Administrator</option>
+            <option value="senior">Senior</option>
+            <option value="caregiver">Caregiver</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
 
@@ -38,21 +39,38 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted, watch } from 'vue';
 import { auth, db } from '../firebase/config';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; 
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 const isLogin = ref(true);
-const form = reactive({ email: '', password: '', role: 'user' });
+
+const syncModeWithRoute = () => {
+  if (route.path.includes('register') || route.query.mode === 'register') {
+    isLogin.value = false;
+  } else {
+    isLogin.value = true;
+  }
+};
+
+onMounted(syncModeWithRoute);
+watch(() => route.fullPath, syncModeWithRoute);
+
+const form = reactive({ email: '', password: '', role: 'senior' });
 const errors = reactive({ email: '', password: '' });
 
 const toggleMode = () => {
   isLogin.value = !isLogin.value;
   errors.email = '';
   errors.password = '';
+  router.replace({ 
+    path: route.path, 
+    query: { mode: isLogin.value ? 'login' : 'register' } 
+  });
 };
 
 const validateForm = () => {
