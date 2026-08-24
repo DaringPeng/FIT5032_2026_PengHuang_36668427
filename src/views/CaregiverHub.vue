@@ -45,9 +45,58 @@
               >
                 📄 Export Guide to PDF
               </button>
-
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gemini API Integration -->
+    <div class="card shadow border-0 mt-5 mb-5 border-start border-5 border-info">
+      <div class="card-header bg-white pt-4 pb-0 border-0">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="d-flex align-items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="#0dcaf0" stroke="#0dcaf0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-info">
+              <path d="M12 2c.132 5.827 4.173 9.868 10 10-5.827.132-9.868 4.173-10 10-0.132-5.827-4.173-9.868-10-10 5.827-.132 9.868-4.173 10-10z"></path>
+            </svg>
+            <h3 class="fw-bold mb-0 text-dark">Medical Terms Translator</h3>
+          </div>
+          <span class="badge bg-info text-white px-3 py-2 rounded-pill shadow-sm" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+            Powered by Gemini AI
+          </span>
+        </div>
+        <p class="text-muted fs-6 mt-3">
+          Paste complex medical reports or doctor's notes below. Our AI will instantly translate them into simple, warm, and easy-to-understand terms.
+        </p>
+      </div>
+      
+      <div class="card-body p-4">
+        <textarea 
+          v-model="medicalText" 
+          class="form-control form-control-lg mb-3 shadow-sm" 
+          rows="5" 
+          placeholder="Paste medical text here..."
+        ></textarea>
+        
+        <button 
+          @click="translateText" 
+          class="btn btn-info text-white fw-bold px-5 py-2 rounded-pill shadow-sm transition-all" 
+          :disabled="isTranslating || !medicalText.trim()"
+        >
+          <span v-if="isTranslating" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isTranslating ? 'Translating via Gemini AI...' : '✨ Translate to Plain English' }}
+        </button>
+
+        <div v-if="aiErrorMessage" class="alert alert-danger mt-4 fw-bold shadow-sm">
+          ❌ {{ aiErrorMessage }}
+        </div>
+
+        <div v-if="parsedResult" class="mt-4 p-4 bg-light rounded-4 border border-info shadow-sm transition-all">
+          <div class="d-flex align-items-center mb-3">
+            <span class="fs-4 me-2">💡</span>
+            <h5 class="fw-bold text-info mb-0">Simple Explanation</h5>
+          </div>
+          <div class="fs-6 text-dark markdown-body" v-html="parsedResult"></div>
         </div>
       </div>
     </div>
@@ -57,13 +106,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { jsPDF } from "jspdf";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { marked } from 'marked';
 
 const resources = ref([]);
 const searchQuery = ref('');
 
 const initData = [
   { id: 101, title: "Home Safety Modifications", description: "A downloadable guide for preventing falls at home.", category: "Caregiver PDF", ratings: [4, 5], selectedRating: 5 },
-  { id: 102, title: "Respite Care Options", description: "Understanding your local respite care support.", category: "Caregiver PDF", ratings: [5, 5], selectedRating: 5 }
+  { id: 102, title: "Respite Care Options", description: "Understanding your local respite care support.", category: "Caregiver PDF", ratings: [5, 5], selectedRating: 5 },
+  { id: 103, title: "Diet Guidelines for Seniors", description: "A downloadable guide to a healthy daily diet for seniors", category: "Caregiver PDF", ratings: [5, 5], selectedRating: 5 }
 ];
 
 const fetchResources = () => {
@@ -105,7 +157,7 @@ const exportToPDF = (item) => {
   doc.text(`Category: ${item.category}`, 20, 45);
 
   doc.setFontSize(14);
-  doc.setTextColor(0, 0, 0); // 黑色
+  doc.setTextColor(0, 0, 0);
 
   const splitDescription = doc.splitTextToSize(item.description, 170);
   doc.text(splitDescription, 20, 60);
@@ -115,4 +167,85 @@ const exportToPDF = (item) => {
 };
 
 onMounted(() => fetchResources());
+
+const medicalText = ref('');
+const translatedResult = ref('');
+const isTranslating = ref(false);
+const aiErrorMessage = ref('');
+
+const parsedResult = computed(() => {
+  if (!translatedResult.value) return '';
+  return marked.parse(translatedResult.value);
+});
+
+const translateText = async () => {
+  if (!medicalText.value.trim()) return;
+  
+  isTranslating.value = true;
+  aiErrorMessage.value = '';
+  translatedResult.value = '';
+
+  try {
+    const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "models/gemini-3.6-flash" });
+
+    const prompt = `
+      You are a highly empathetic, professional, and patient medical assistant working for a health charity.
+      A caregiver or senior citizen has provided you with the following medical text. 
+      Your task is to translate this complex medical jargon into simple, everyday language that someone without a medical background can easily understand.
+      
+      Requirements:
+      - Use warm, reassuring, and supportive language.
+      - Break down complex terms using bullet points if necessary.
+      - Keep it concise but highly informative.
+      
+      Medical Text to Translate:
+      "${medicalText.value}"
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    translatedResult.value = response.text();
+    
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    aiErrorMessage.value = "Failed to connect to AI translator. Please check your API key or network connection.";
+  } finally {
+    isTranslating.value = false;
+  }
+};
 </script>
+
+<style scoped>
+.transition-all {
+  transition: all 0.3s ease-in-out;
+}
+textarea:focus {
+  border-color: #0dcaf0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25);
+}
+:deep(.markdown-body) {
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+:deep(.markdown-body p) {
+  margin-bottom: 1.25rem;
+}
+:deep(.markdown-body p:last-child) {
+  margin-bottom: 0;
+}
+:deep(.markdown-body strong) {
+  color: #0dcaf0;
+  font-weight: 700;
+  background-color: rgba(13, 202, 240, 0.1);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+}
+:deep(.markdown-body ul) {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+:deep(.markdown-body li) {
+  margin-bottom: 0.5rem;
+}
+</style>

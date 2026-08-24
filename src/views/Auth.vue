@@ -49,28 +49,24 @@ const router = useRouter();
 const route = useRoute();
 const isLogin = ref(true);
 
-const syncModeWithRoute = () => {
-  if (route.path.includes('register') || route.query.mode === 'register') {
-    isLogin.value = false;
-  } else {
-    isLogin.value = true;
-  }
-};
+onMounted(() => {
+  isLogin.value = route.query.mode !== 'register';
+});
 
-onMounted(syncModeWithRoute);
-watch(() => route.fullPath, syncModeWithRoute);
+watch(() => route.query.mode, (newMode) => {
+  if (route.path === '/auth') {
+    isLogin.value = newMode !== 'register';
+    errors.email = '';
+    errors.password = '';
+  }
+});
 
 const form = reactive({ email: '', password: '', role: 'senior' });
 const errors = reactive({ email: '', password: '' });
 
 const toggleMode = () => {
-  isLogin.value = !isLogin.value;
-  errors.email = '';
-  errors.password = '';
-  router.replace({ 
-    path: route.path, 
-    query: { mode: isLogin.value ? 'login' : 'register' } 
-  });
+  const targetMode = isLogin.value ? 'register' : 'login';
+  router.push({ query: { mode: targetMode } });
 };
 
 const validateForm = () => {
