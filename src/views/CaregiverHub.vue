@@ -108,6 +108,7 @@ import { ref, computed, onMounted } from 'vue';
 import { jsPDF } from "jspdf";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 const resources = ref([]);
 const searchQuery = ref('');
@@ -175,7 +176,8 @@ const aiErrorMessage = ref('');
 
 const parsedResult = computed(() => {
   if (!translatedResult.value) return '';
-  return marked.parse(translatedResult.value);
+  const rawHtml = marked.parse(translatedResult.value);
+  return DOMPurify.sanitize(rawHtml);
 });
 
 const translateText = async () => {

@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, reactive } from 'vue';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
@@ -148,12 +148,13 @@ const joinForum = () => {
   hasJoined.value = true;
 };
 
+let map = null;
+
 onMounted(() => {
   fetchEvents();
   mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
-
   // Initial map
-  const map = new mapboxgl.Map({
+  map = new mapboxgl.Map({
     container: 'map-container',
     style: 'mapbox://styles/mapbox/streets-v12',
     center: [144.9631, -37.8136],
@@ -178,6 +179,10 @@ onMounted(() => {
 
   map.addControl(directions, 'top-left');
   map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+});
+
+onUnmounted(() => {
+  if (map) map.remove();
 });
 </script>
 
